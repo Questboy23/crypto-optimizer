@@ -1,0 +1,11 @@
+# DECISIONS
+- Data: Kraken bulk OHLCVT zips (Full parts 00-04 + 2026Q3), daily 1440 files for *USD pairs read via HTTP range requests (kraken_data.py); disk is full, full download impossible. Source: support.kraken.com/articles/360047124832. Data runs 2013-10-06 to 2026-09-30, 760 USD pairs (incl. delisted pairs that stopped trading).
+- Fee: Kraken Pro lowest tier (Tier 1, <$2.5K 30d volume): spot taker 0.80%, maker 0.40%. Source: kraken.com/features/fee-schedule (dated 2026-10-08). Used: 0.80% taker per side + 0.05% slippage, round trip 1.70%. API AssetPairs `fees` was empty.
+- Splits: holdout 2025-10-01..2026-09-30; gap 2025-04-01..2025-09-30; development: before 2025-04-01. Eval starts 2019-01-01 (cold start).
+- Baseline: zero-mean Student-t, df=4, scale from trailing-365-day std (moment fit; scipy MLE per step is too slow). Probability clip 1e-6.
+- Groups: 4 disjoint groups from coins ever in a monthly top-30 universe (dev only), excluding XBT (BTC) and ETH.
+- Leak guard: History holds copies of past arrays only, no reference to future; at(i>t) raises LeakError; static denylist rejects inspect/frame/file access in program source. Guards against accidental look-ahead by generated code, not an adversary.
+- Residual target: coin return minus trailing-90d beta (causal) x BTC return; program is run again on a residual-price history.
+- Direction vs scale bits: scale_bits = baseline bits - bits of a symmetric t with the program's own std; direction_bits = remainder.
+- fcc skipped (server will not start; config schema mismatch), see fcc_log.csv.
+- Random programs for gate 2 are signal-free by construction (baseline t with seeded-noise tilt and random scale multiplier).
