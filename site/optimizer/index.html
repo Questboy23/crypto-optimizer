@@ -1,182 +1,100 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Crypto Optimizer</title>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Generic Optimizer Engine</title>
 <style>:root{--bg:#fff;--fg:#14161a;--mut:#5b6270;--line:#e3e6eb;--acc:#0b5fff;--card:#f6f7f9}@media(prefers-color-scheme:dark){:root{--bg:#0f1115;--fg:#e8eaee;--mut:#9aa2b1;--line:#262b34;--acc:#6ea0ff;--card:#171a21}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,sans-serif}main{max-width:880px;margin:0 auto;padding:24px 16px 64px}
 h1{font-size:28px;margin:8px 0}h2{font-size:20px;margin:36px 0 8px}p,li{max-width:70ch}.mut{color:var(--mut)}a{color:var(--acc)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:16px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}.card b{display:block;font-size:24px}
-table{border-collapse:collapse;width:100%;font-size:14px;display:block;overflow-x:auto}th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
-.bar{display:flex;align-items:center;gap:10px;margin:6px 0}.bar span{width:80px}.bar i{display:block;height:14px;background:var(--acc);border-radius:3px}
-pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:12px;max-height:480px}details{margin-top:16px}</style></head><body><main>
-<h1>Crypto forecasting optimizer</h1>
-<p class=mut>Scores code that predicts next-day coin returns, in bits, on unseen data. Kraken daily USD data, 30 coins per group, holdout 2025-10-01 to 2026-09-30.</p>
-<p><b>Verdict: no tradable edge found.</b> The best program saves 27.9 bits over a Student-t baseline across a year of holdout (95% CI -315 to 326). No trade cleared the 1.7% round-trip Kraken cost, so EV is 0.00%/yr.</p>
-<div class=cards><div class=card><b>27.9</b>best program, holdout bits</div><div class=card><b>67.8</b>fixed-share mixture, holdout bits</div><div class=card><b>0.00%</b>EV/yr after costs</div><div class=card><b>1342</b>programs tried (search penalty base)</div></div>
-<h2>Holdout results (each evaluated once)</h2><div><div class=bar><span>best</span><i style='width:63.97443771362305%'></i><b>27.9 bits</b></div><div class=bar><span>seed</span><i style='width:63.26401901245117%'></i><b>26.5 bits</b></div><div class=bar><span>mixture</span><i style='width:83.89767837524414%'></i><b>67.8 bits</b></div></div>
-<table><tr><th>program</th><th>total bits</th><th>direction</th><th>scale</th><th>residual</th><th>EV/yr</th><th>skill p</th></tr><tr><td>best</td><td>27.9</td><td>-78.9</td><td>106.8</td><td>132.3</td><td>0.00%</td><td>0.010</td></tr><tr><td>seed</td><td>26.5</td><td>-52.7</td><td>79.2</td><td>108.3</td><td>0.00%</td><td>0.010</td></tr><tr><td>mixture</td><td>67.8</td><td>-62.9</td><td>130.7</td><td>178.5</td><td>0.00%</td><td>0.010</td></tr></table>
-<p class=mut>Direction bits are negative for all three: the gain comes from volatility scale, not from predicting direction. The mixture beat the best program by 0.109 bits/day (p = 0.003).</p>
-<h2>Optuna search vs LLM loop (development)</h2>
-<table><tr><th>group</th><th>Optuna net bits</th><th>LLM net bits</th><th>direction bits</th></tr><tr><td>0</td><td>-241</td><td>-241</td><td>-261</td></tr><tr><td>1</td><td>-662</td><td>-662</td><td>-285</td></tr><tr><td>2</td><td>28</td><td>28</td><td>-148</td></tr><tr><td>3</td><td>211</td><td>211</td><td>-280</td></tr></table>
-<p class=mut>Identical columns: the local qwen2.5-coder:3b proposer never beat the Optuna program it started from. Certificates: Optuna data_limited, LLM data_limited (radical round untested for 2 of 4 groups).</p>
-<h2>Certificate: do the 4 searches agree?</h2>
-<table><tr><th>pair</th><th>diff bits</th><th>90% CI</th><th>TOST p</th><th>equivalent</th></tr><tr><td>0-1</td><td>124.3</td><td>-179.6 to 426.0</td><td>0.73</td><td>no</td></tr><tr><td>0-2</td><td>-393.4</td><td>-1,311.6 to 273.1</td><td>0.76</td><td>no</td></tr><tr><td>0-3</td><td>-399.4</td><td>-937.1 to 141.0</td><td>0.87</td><td>no</td></tr><tr><td>1-2</td><td>-517.7</td><td>-931.3 to -141.2</td><td>0.98</td><td>no</td></tr><tr><td>1-3</td><td>-523.7</td><td>-931.2 to -160.3</td><td>0.99</td><td>no</td></tr><tr><td>2-3</td><td>-6.0</td><td>-679.1 to 756.2</td><td>0.51</td><td>no</td></tr></table>
-<h2>Does the certificate work? (planted signals)</h2>
-<p>On 24 simulated markets with a known optimum, the certificate said done 22 times, each correct (precision 22/22, 95% CI 0.85 to 1.00) and missed 2 (recall 0.92, CI 0.74 to 0.98). The rules were tuned on this same set, and all 24 searches converged, so false-done rate is untested.</p>
-<h2>Interval calibration (interval-only)</h2>
-<p>Online conformal recalibration moves the 5% tail rates from 3.7% / 3.5% to 5.8% / 5.3%. It cuts bits (1168 to -3669), so it is used for reported intervals only.</p>
-<h2>Checks</h2><p>gate1 planted signal recovered within 20%, gate2 at most 8% of 100 random programs significant (got 2%), gate3 look-ahead raises an error, 16 unit tests pass.</p>
-<h2>Code and full report</h2><p><a href="https://github.com/Questboy23/crypto-optimizer">github.com/Questboy23/crypto-optimizer</a> (rebuild with <code>python build_site.py</code>).</p>
-<details><summary>Full REPORT.md</summary><pre># REPORT
+pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:12px;max-height:480px}
+.status{padding:12px;border-radius:8px;margin:16px 0}.status.running{background:#fff3cd;border:1px solid #ffc107;color:#856404}.status.done{background:#d4edda;border:1px solid #28a745;color:#155724}
+</style></head><body><main>
+<h1>Generic Optimizer Engine</h1>
+<p class=mut>A program search engine: you provide (1) what to optimize and (2) a benchmark; it returns the best program it found.</p>
 
-Holdout: 2025-10-01 to 2026-09-30; group 3 of 4 (30 coins); fee 0.80% taker + 0.05% slippage per side. Every program evaluated once.
+<h2>How it works</h2>
+<ul>
+<li><b>Proposer:</b> Free LLM (Nemotron 3 Ultra via NVIDIA NIM) proposes program structures with <code>diff_based_evolution: false</code></li>
+<li><b>Bayesian tuning:</b> Numeric constants marked <code>TUNABLE(name, low, high)</code> are optimized by Optuna (GPSampler if available, else TPE) before scoring</li>
+<li><b>Testbed:</b> 4 BBOB functions, 4 TSPLIB instances (elkai reference), 1 synthetic market with planted signal</li>
+<li><b>Ablation arms:</b> Fixed best style, Random, Thompson sampling, Thompson+Pair — 9 problems × 4 seeds × 4 arms × 40 proposals</li>
+<li><b>Certificate:</b> Multi-search agreement with stagnation detection, radical-round check, and planted-signal grading</li>
+</ul>
 
-## Headline per program (holdout)
-- **best**: EV 0.00%/yr (95% CI 0.00 to 0.00), skill p = 0.0099 after 1432 tries, direction bits -78.9, worst-5%-day loss 0.00%, P(loss over 1 yr) 0% (total bits 27.9, 95% CI -315.3 to 325.6; scale bits 106.8; resid bits 132.3; trades on 0.00% of predictions)
-- **seed**: EV 0.00%/yr (95% CI 0.00 to 0.00), skill p = 0.0099 after 1432 tries, direction bits -52.7, worst-5%-day loss 0.00%, P(loss over 1 yr) 0% (total bits 26.5, 95% CI -286.1 to 321.4; scale bits 79.2; resid bits 108.3; trades on 0.00% of predictions)
-- **mixture**: EV 0.00%/yr (95% CI 0.00 to 0.00), skill p = 0.0099 after 1432 tries, direction bits -62.9, worst-5%-day loss 0.00%, P(loss over 1 yr) 0% (total bits 67.8, 95% CI -283.9 to 382.5; scale bits 130.7; resid bits 178.5; trades on 0.00% of predictions)
+<h2>Current status</h2>
+<div class="status done">Complete — <a href="/optimizer/REPORT_NEXT.md">REPORT_NEXT.md</a> available. Full results below.</div>
 
-Best minus seed, bits per day (paired block bootstrap): 0.004 (95% CI -0.330 to 0.313), one-sided p = 0.498.
-Mixture minus best, bits per day (one of 2 holdout comparisons, so Bonferroni threshold is p &lt; 0.025; it still passes): 0.109 (95% CI 0.029 to 0.187), p = 0.003.
+<h2>Results</h2>
+<div id="results">
+<pre># REPORT_NEXT: prompt-style selection ablation
 
-Best program source: optuna (development bits Optuna 1174.2, LLM 1174.2).
+Metric: proposals until best-so-far reaches 95% of the known optimum (never reached counts as 40).
 
-## Certificate (development, 4 searches, Optuna)
-Verdict: **data_limited**; N=1342; delta=21.5 bits.
-Stagnation fail rates (last 30 proposals): [0.97, 0.97, 1.0, 1.0]; rule-of-three upper bound on improvement rate 0.100.
-Radical round passed: True.
-Pairwise TOST:
-- 0-1: diff 124.3 bits, 90% CI -179.6 to 426.0, TOST p = 0.726, equivalent: False
-- 0-2: diff -393.4 bits, 90% CI -1311.6 to 273.1, TOST p = 0.762, equivalent: False
-- 0-3: diff -399.4 bits, 90% CI -937.1 to 141.0, TOST p = 0.866, equivalent: False
-- 1-2: diff -517.7 bits, 90% CI -931.3 to -141.2, TOST p = 0.983, equivalent: False
-- 1-3: diff -523.7 bits, 90% CI -931.2 to -160.3, TOST p = 0.988, equivalent: False
-- 2-3: diff -6.0 bits, 90% CI -679.1 to 756.2, TOST p = 0.505, equivalent: False
+A1 fixed style: `structural_rewrite`
 
-Reveal: {&quot;leader&quot;: 3, &quot;results&quot;: {&quot;g0&quot;: {&quot;own_best_bits&quot;: 774.8446655273438, &quot;leader_params_bits&quot;: 711.0294189453125, &quot;leader_improves&quot;: false}, &quot;g1&quot;: {&quot;own_best_bits&quot;: 650.5584716796875, &quot;leader_params_bits&quot;: 589.75927734375, &quot;leader_improves&quot;: false}, &quot;g2&quot;: {&quot;own_best_bits&quot;: 1168.2244873046875, &quot;leader_params_bits&quot;: 1146.0076904296875, &quot;leader_improves&quot;: false}}}
+## Arms
 
-## Strategy table by stage (successes, trials)
-- g0 stage &lt;50%: tpe=2/20, tweak=0/0, combine=0/0, radical=0/0
-- g0 stage 50-90%: tpe=0/20, tweak=0/20, combine=2/20, radical=0/0
-- g0 stage &gt;90%: tpe=0/0, tweak=0/0, combine=6/60, radical=0/20
-- g1 stage &lt;50%: tpe=0/20, tweak=0/0, combine=0/0, radical=0/0
-- g1 stage 50-90%: tpe=0/0, tweak=0/0, combine=0/0, radical=0/0
-- g1 stage &gt;90%: tpe=0/0, tweak=3/100, combine=0/20, radical=0/20
-- g2 stage &lt;50%: tpe=0/0, tweak=0/0, combine=2/20, radical=0/0
-- g2 stage 50-90%: tpe=0/0, tweak=1/20, combine=0/20, radical=0/0
-- g2 stage &gt;90%: tpe=0/0, tweak=0/0, combine=6/80, radical=0/20
-- g3 stage &lt;50%: tpe=0/0, tweak=0/20, combine=0/0, radical=0/0
-- g3 stage 50-90%: tpe=0/0, tweak=0/20, combine=0/0, radical=0/20
-- g3 stage &gt;90%: tpe=3/40, tweak=0/0, combine=6/60, radical=0/0
+| arm | runs | mean proposals to 95% | reached 95% |
+|---|---|---|---|
+| A1 | 36 | 6.5 | 89% |
+| A2 | 36 | 7.3 | 89% |
+| B | 36 | 9.2 | 86% |
+| C | 36 | 8.3 | 89% |
 
-## Optuna-only vs LLM loop (development period, per coin group; N=1425 tries so far)
+## Paired speedups (reference / challenger, mean proposals)
 
-| group | Optuna net bits | LLM net bits | LLM minus Optuna, bits/day (identical because the LLM never found a better program than its Optuna seed) (95% CI, p) | direction bits O / L | EV%/yr O / L (diff CI, p) |
+| comparison | pairs | speedup | 95% CI | p (one-sided) | p (BH) |
 |---|---|---|---|---|---|
-| 0 | -241 | -241 | 0.000 (0.000 to 0.000, p=1) | -261 / -261 | 0.00 / 0.00 (0.00 to 0.00, p=1) |
-| 1 | -662 | -662 | 0.000 (0.000 to 0.000, p=1) | -285 / -285 | 0.00 / 0.00 (0.00 to 0.00, p=1) |
-| 2 | 28 | 28 | 0.000 (0.000 to 0.000, p=1) | -148 / -148 | 0.00 / 0.00 (0.00 to 0.00, p=1) |
-| 3 | 211 | 211 | 0.000 (0.000 to 0.000, p=1) | -280 / -280 | 0.00 / 0.00 (0.00 to 0.00, p=1) |
+| B vs A1 | 36 | 0.71x | 0.44 to 0.90 | 0.974 | 0.974 |
+| B vs A2 | 36 | 0.79x | 0.53 to 0.99 | 0.936 | 0.974 |
+| C vs B | 36 | 1.10x | 0.86 to 1.47 | 0.211 | 0.634 |
 
-Certificate verdict: Optuna **data_limited**, LLM **data_limited**.
+## Per problem (mean proposals to 95%)
 
-## Proposal style by stage (LLM loop; successes/proposals summed over 4 groups)
-- stage &lt;50%: rewrite 0/0, tweak 2/10, combine 0/0, outside 2/14
-- stage 50-90%: rewrite 0/6, tweak 0/0, combine 0/0, outside 0/0
-- stage &gt;90%: rewrite 0/0, tweak 0/0, combine 0/6, outside 0/24
+| problem | A1 | A2 | B | C |
+|---|---|---|---|---|
+| bbob_sphere | 1.5 | 1.2 | 2.0 | 1.2 |
+| bbob_ellipsoidal | 2.0 | 3.0 | 7.2 | 2.8 |
+| bbob_rastrigin | 2.0 | 2.5 | 4.0 | 8.2 |
+| bbob_rosenbrock | 2.8 | 4.2 | 14.8 | 4.2 |
+| tsplib_burma14 | 1.0 | 1.8 | 1.5 | 1.8 |
+| tsplib_ulysses16 | 1.8 | 1.5 | 2.2 | 3.5 |
+| tsplib_ulysses22 | 1.2 | 3.5 | 4.5 | 8.5 |
+| tsplib_att48 | 6.5 | 7.8 | 6.5 | 4.8 |
+| synthetic_market | 40.0 | 40.0 | 40.0 | 40.0 |
 
-LLM certificate: **data_limited** (N=1425, delta=21.1, radical round passed: None, stagnation fail rates [0.92, 0.92, 0.94, 0.92]).
+## Controls (same compare_arms code)
 
-## Recalibration (interval-only)
-Used only to report prediction-interval coverage, never in bits scoring. Group 2 best Optuna program, central 90% interval and 5% tails, development period:
-```
-{
- &quot;before&quot;: {
-  &quot;inside90&quot;: 0.9283959513904811,
-  &quot;low_tail5&quot;: 0.03691571947983884,
-  &quot;up_tail5&quot;: 0.03468832912967998,
-  &quot;total_bits&quot;: 1168.2242431640625
- },
- &quot;after&quot;: {
-  &quot;inside90&quot;: 0.8887287497133872,
-  &quot;low_tail5&quot;: 0.05784663762324347,
-  &quot;up_tail5&quot;: 0.05342461266336926,
-  &quot;total_bits&quot;: -3669.203369140625
- }
+- Positive control (true 2x speedup): speedup 2.03x, p=0.0005, detected.
+- Negative control (no difference, 20 draws): 20/20 quiet, ok.
+
+Proposals by provider: {&#x27;groq&#x27;: 81, &#x27;nim&#x27;: 335, &#x27;groq-qwen&#x27;: 74, &#x27;kilo&#x27;: 425, &#x27;none&#x27;: 213}; total tokens 3701449.
+</pre>
+</div>
+
+<h2>Architecture</h2>
+<pre>optimizer/
+├── evolve.py           # OpenEvolve integration with free proposer
+├── tunable.py          # TUNABLE() marker + Optuna integration
+├── testbed.py          # Evaluator plugins (BBOB, TSPLIB, Synthetic)
+├── prompts/custom/     # 6 prompt templates + selector.py
+├── run_ablation.sh     # Background launcher (caffeinated)
+├── make_report.py      # Auto-generates REPORT_NEXT.md + re-renders this page
+└── anchors_hidden/     # 180 read-only holdout instances</pre>
+
+<h2>Links</h2>
+<ul>
+<li><a href="/crypto">Crypto optimizer beta report</a> — the crypto-specific search that preceded this engine</li>
+<li><a href="https://github.com/Questboy23/crypto-optimizer">GitHub repo</a></li>
+</ul>
+</main><script>
+async function checkReport() {
+  try {
+    const resp = await fetch('/optimizer/REPORT_NEXT.md', {method: 'HEAD'});
+    if (resp.ok) {
+      document.getElementById('status').className = 'status done';
+      document.getElementById('status').innerHTML = 'Complete — <a href="/optimizer/REPORT_NEXT.md">REPORT_NEXT.md</a> available. Reloading...';
+      setTimeout(() => location.reload(), 2000);
+    }
+  } catch (e) {}
 }
-```
-Before: inside-90 0.928, tails 3.7% / 3.5% (too wide). After: inside-90 0.889, tails 5.8% / 5.3% (near nominal 5%). Applied to the forecast itself it costs bits (1168 -&gt; -3669), so it is not used for scoring.
-
-## Gate results
-```
-uv run pytest -q tests &gt; logs/pytest.log 2&gt;&amp;1; uv run python check.py
-{&quot;gate1&quot;: &quot;pass&quot;, &quot;gate2&quot;: &quot;pass&quot;, &quot;gate3&quot;: &quot;pass&quot;, &quot;tests&quot;: &quot;pass&quot;}
-
-```
-
-## Certificate grading on planted signals (gate 4, 24 instances, 4 searches each, 100 trials)
-```
-{
- &quot;n&quot;: 24,
- &quot;verdicts&quot;: {
-  &quot;done&quot;: 22,
-  &quot;not_done&quot;: 0,
-  &quot;data_limited&quot;: 2
- },
- &quot;precision&quot;: 1.0,
- &quot;precision_ci&quot;: [
-  0.8513451253913791,
-  1.0
- ],
- &quot;n_done&quot;: 22,
- &quot;recall&quot;: 0.9166666666666666,
- &quot;recall_ci&quot;: [
-  0.741511978067893,
-  0.9768411847029567
- ],
- &quot;n_converged&quot;: 24,
- &quot;instances&quot;: [
-  {
-   &quot;mu&quot;: 0.0,
-   &quot;verdict&quot;: &quot;done&quot;,
-   &quot;all_near&quot;: true,
-   &quot;frac_near&quot;: 1.0
-  },
-  {
-   &quot;mu&quot;: 0.008037375350951179,
-   &quot;verdict&quot;: &quot;done&quot;,
-   &quot;all_near&quot;: true,
-   &quot;frac_near&quot;: 1.0
-  },
-  {
-   &quot;mu&quot;: 0.01157063889887753,
-   &quot;verdict&quot;: &quot;done&quot;,
-   &quot;all_near&quot;: true,
-   &quot;frac_near&quot;: 1.0
-  },
-  {
-   &quot;mu&quot;: 0.0,
-   &quot;verdict&quot;: &quot;done&quot;,
-   &quot;all_near&quot;: true,
-   &quot;frac_near&quot;: 1.0
-  },
-  {
-   &quot;mu&quot;: 0.008037375350951179,
-   &quot;verdict&quot;: &quot;done&quot;,
-   &quot;all_near&quot;: true,
-   &quot;frac_near&quot;: 1.0
-  },
-  {
-   &quot;mu&quot;: 0.01157063889887753,
-   &quot;verdict&quot;: &quot;done&quot;,
-   &quot;all_near&quot;: true,
-   &quot;frac_near&quot;: 1.0
-  },
-  {
-   &quot;mu&quot;: 0.0,
-   &quot;
-```
-Precision 22/22 (Wilson 95% CI 0.85 to 1.00); recall 22/24 (0.74 to 0.98). All 24 instances converged by the 10% criterion, so a false-done rate is untested. Certificate rules (stagnation counts only gains above 1%, 100 trials) were adjusted across four grading runs on this same set (distinct-data 0 done, same-data 40 trials 0 done), so these numbers are tuned on the grading data.
-
-## Cost
-LLM tokens used at runtime: about 197,000 (62 logged proposals of the final qwen2.5-coder:3b run on local Ollama, cost $0; earlier 7b and diff-mode attempts not counted). Optuna path: 0. Claude Code tokens are in ccusage.
-GPU hours: 0 attached (CPU-only Kaggle probes logged 0.162h in gpu_usage.csv).
-</pre></details>
-</main></body></html>
+checkReport();
+setInterval(checkReport, 30000);
+</script></body></html>
